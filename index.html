@@ -17,8 +17,7 @@
   <input type="text" id="days" placeholder="Number of days" />
   <input type="text" id="budget" placeholder="Your Budget (AZN)" />
   <button id="generateBtn">Generate</button>
-  <h3>Your Trip Plan :</h3>
-  <div id="output"></div> 
+  <button id="downloadBtn">Download Itinerary</button> <div id="output"></div> 
 
   <script type="importmap">
     {
@@ -47,21 +46,46 @@
       If the budget is insufficient, simply state "Insufficient budget for this trip."
       Also, suggest a good restaurant in the destination city and its approximate price range.`;
 
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text(); // Define 'text' here
 
-      // Check for insufficient budget message
-      if (text.trim() === "Insufficient budget for this trip.") {
-        document.getElementById("output").innerHTML = "Unfortunately, your budget is not enough for this trip.";
-        return; // Stop further processing
+        // Check for insufficient budget message
+        if (text.trim() === "Insufficient budget for this trip.") {
+          document.getElementById("output").innerHTML = "Unfortunately, your budget is not enough for this trip.";
+          return; // Stop further processing
+        }
+
+        var converter = new showdown.Converter();
+        document.getElementById("output").innerHTML = converter.makeHtml(text);
+
+        // Enable the download button
+        document.getElementById("downloadBtn").disabled = false;
+      } catch (error) {
+        console.error("Error generating itinerary:", error);
+        // Handle the error appropriately, e.g., display an error message to the user
       }
+    }
 
-      var converter = new showdown.Converter();
-      document.getElementById("output").innerHTML = converter.makeHtml(text);
+    function downloadItinerary() {
+      const itineraryText = document.getElementById("output").innerText;
+      const blob = new Blob([itineraryText], { type: "text/plain" });
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "itinerary.txt";
+      link.click();
+
+      URL.revokeObjectURL(url); // Release the URL object
     }
 
     document.getElementById("generateBtn").addEventListener("click", run);
+    document.getElementById("downloadBtn").addEventListener("click", downloadItinerary);
+
+    // Initially disable the download button
+    document.getElementById("downloadBtn").disabled = true;
   </script>
 </body>
 </html>
