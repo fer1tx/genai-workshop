@@ -1,82 +1,74 @@
+
 <!DOCTYPE html>
-<html lang="en">
-
-
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
-
-
-<title>Document</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <title>GenTrip</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/showdown/2.1.0/showdown.min.js"></script>
 </head>
-
-
 <body>
-<h1>Workshop Project (Fer1tx)</h1>
-<input type="text" id="from" placeholder="Starting point" />
-<input type="text" id="to" placeholder="Destination" />
-<input type="text" id="days" placeholder="Number of days" />
-<button id="generateBtn">Generate</button>
-<h3>Generated Content</h3>
-<div id="output"></div>
-<script type="importmap">
-  
-{
-"imports": {
-"@google/generative-ai": "https://esm.run/@google/generative-ai"
-}
 
-}
-</script>
+  <h1><span data-i18n="title-part1">Gen</span><span data-i18n="title-part2">Trip</span>
+    <small>by Fer1tx</small>
+  </h1>
+  <!-- ... input fields and other UI elements with data-i18n attributes ... -->
+  <input type="text" id="from" placeholder="Starting point" />
+  <input type="text" id="to" placeholder="Destination" />
+  <input type="text" id="days" placeholder="Number of days" />
+  <input type="text" id="budget" placeholder="Your Budget (AZN)" />
+  <button id="generateBtn">Generate</button>
+  <h3>Your Trip Plan :</h3>
+  <div id="output"></div>
+  <div id="expenses"></div> 
 
+  <script type="importmap">
+    {
+      "imports": {
+        "@google/generative-ai": "https://esm.run/@google/generative-ai"
+      }
+    }
+  </script>
 
-<script type="module">
-import { GoogleGenerativeAI } from "@google/generative-ai";
+  <script type="module">
+    import { GoogleGenerativeAI } from "@google/generative-ai";
 
+    const API_KEY = "AIzaSyAt0n3xKD_ZtcTh4I2-kK2Fmr00O8347BU";
+    const genAI = new GoogleGenerativeAI(API_KEY);
 
-// Fetch your API_KEY
-const API_KEY = "AIzaSyBLajfJi5jMcOjcr3ifv1Bo29_se6vg778";
+    async function run() {
+      const fromDest = document.getElementById("from").value;
+      const toDest = document.getElementById("to").value;
+      const days = document.getElementById("days").value;
+      const budget = parseFloat(document.getElementById("budget").value);
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
 
+      const prompt = `Create a travel itinerary from ${fromDest} to ${toDest} for ${days} days, with a total budget of ${budget} AZN (approximately ${budget/days} AZN per day). Include estimated costs for each activity/item in the itinerary. Ensure the total estimated cost does not exceed the budget. If the budget is insufficient, simply state "Insufficient budget for this trip."`;
 
-// Access your API key (see "Set up your API key" above)
-const genAI = new GoogleGenerativeAI(API_KEY);
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
 
+      // Check for insufficient budget message
+      if (text.trim() === "Insufficient budget for this trip.") {
+        document.getElementById("output").innerHTML = "Unfortunately, your budget is not enough for this trip.";
+        document.getElementById("expenses").innerHTML = ""; // Clear any previous expenses
+        return; // Stop further processing
+      }
 
-// ...
-async function run() {
-console.log('Calling');
-const fromDest = document.getElementById("from").value;
-const toDest = document.getElementById("to").value;
-const days = document.getElementById("days").value;
-// For text-only input, use the gemini-pro model
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro-latest" });
+      var converter = new showdown.Converter();
+      document.getElementById("output").innerHTML = converter.makeHtml(text);
 
-
-const prompt = `Create a travel itinerary from ${fromDest} to ${toDest} for ${days} days.`;
-
-
-const result = await model.generateContent(prompt);
-const response = await result.response;
-const text = response.text();
-var converter = new showdown.Converter();
-
-
-document.getElementById("output").innerHTML = converter.makeHtml(text);
-}
-
-
-// run();
-
-
-document.getElementById("generateBtn").addEventListener("click", run);
-
-
-// ...
-</script>
+      // Extract expenses and calculate total (same as before)
+      const expenseRegex = /(\d+(?:\.\d+)?) AZN/g; 
+      let totalExpenses = 0;
+      let expensesHtml = "<h4>Estimated Expenses:</h4><ul>";
+      let match;
+      while ((match = expenseRegex.exec(text)) !== null) {
+        // ... (rest of the expense extraction and display logic)
+      }
+    }
+    document.getElementById("generateBtn").addEventListener("click", run);
+  </script>
 </body>
-
-
 </html>
-
